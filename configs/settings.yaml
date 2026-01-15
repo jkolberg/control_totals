@@ -3,6 +3,7 @@
 #----------------------------
 CensusKey: CENSUS_KEY # Environment variable name for Census API key
 
+census_year: 2020
 county_ids: [53033,53035,53053,53061]
 state_id: 53
 
