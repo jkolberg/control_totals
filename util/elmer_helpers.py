@@ -2,8 +2,9 @@ import pandas as pd
 from shapely import wkt
 import sqlalchemy
 import geopandas as gpd
+import pyodbc
 
-def read_from_elmer_geo(feature_class_name, cols, crs={'init': 'epsg:2285'}):
+def read_from_elmer_geo(feature_class_name, cols, crs='epsg:2285'):
         """
         Returns the specified feature class as a geodataframe from ElmerGeo.
 
@@ -26,9 +27,16 @@ def read_from_elmer_geo(feature_class_name, cols, crs={'init': 'epsg:2285'}):
                         (cols_str, feature_class_name), con=con)
         con.close()
         df['geometry'] = df['geometry'].apply(wkt.loads)
-        gdf=gpd.GeoDataFrame(df, geometry='geometry')
-        gdf.crs = crs
+        gdf=gpd.GeoDataFrame(df, geometry='geometry', crs=crs)
         cols = [col for col in gdf.columns if col not in 
                 ['Shape', 'GDB_GEOMATTR_DATA', 'SDE_STATE_ID']]
     
         return gdf[cols]
+
+def read_from_elmer(table_name, columns):
+    conn_string = "DRIVER={ODBC Driver 17 for SQL Server}; SERVER=SQLserver; DATABASE=Elmer; trusted_connection=yes"
+    sql_conn = pyodbc.connect(conn_string)
+    cols_str = ', '.join(columns)
+    sql_query = f'select {cols_str} from {table_name}'
+    df = pd.read_sql(sql=sql_query, con=sql_conn)
+    return df
