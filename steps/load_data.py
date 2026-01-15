@@ -1,0 +1,56 @@
+import pandas as pd
+from util import Pipeline
+
+def load_data_tables_to_hdf5(pipeline):
+    # load general data tables in the data_tables list in settings.yaml
+    p = pipeline
+    data_tables = p.settings.get('data_tables', [])
+    for table in data_tables:
+        table_name = table['name']
+        file_path = f"{p.get_data_dir()}/{table['file']}"
+        print(f"Loading {file_path} into HDF5 as {table_name}...")
+        df = pd.read_csv(file_path)
+        
+        # save to HDF5
+        p.save_table(table_name, df)
+
+
+def load_targets_to_hdf5(pipeline):
+    # load target tables for each county
+    p = pipeline
+    for table in p.settings['targets_tables']:
+        table_name = table['name']
+        file_path = f"{p.get_data_dir()}/{table['file']}"
+        print(f"Loading {file_path} into HDF5 as {table_name}...")
+        df = pd.read_csv(file_path)
+        
+        # rename columns based on settings
+        for col in ['pop_chg_col', 'unit_chg_col', 'emp_chg_col']:
+            if col in table:
+                df.rename(columns={table[f'{col}']: col.replace('_col', '')}, inplace=True, errors='ignore')
+        
+        # check that the correct columns are present
+        data_check_targets(df, table_name)
+        
+        # save to HDF5
+        p.save_table(table_name, df)
+
+def data_check_targets(df, table_name):
+    # each targets table should have either unit_chg or pop_chg, but not both
+    # and each should have emp_chg and target_id
+    if 'unit_chg' in df.columns and 'pop_chg' in df.columns:
+        raise ValueError(f"{table_name} cannot have both unit_chg and pop_chg columns.")
+    if 'emp_chg' not in df.columns:
+        raise ValueError(f"{table_name} must have emp_chg column.")
+    if 'target_id' not in df.columns:
+        raise ValueError(f"{table_name} must have target_id column.")
+    if 'unit_chg' not in df.columns and 'pop_chg' not in df.columns:
+        raise ValueError(f"{table_name} must have either unit_chg or pop_chg column.")
+
+def run_step(context):
+    # pypyr step
+    p = Pipeline(settings_path=context['configs_dir'])
+    print("Loading data tables from CSV files into HDF5...")
+    load_data_tables_to_hdf5(p)
+    load_targets_to_hdf5(p)
+    return context

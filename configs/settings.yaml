@@ -1,4 +1,11 @@
 #----------------------------
+# General settings
+#----------------------------
+data_dir: data
+output_dir: output
+
+
+#----------------------------
 # Census settings
 #----------------------------
 CensusKey: CENSUS_KEY # Environment variable name for Census API key
@@ -43,10 +50,54 @@ Elmer: # database
  - name: ofm_estimates_2019
    sql_table: ofm.v_estimates_2019
 
+#----------------------------
+# tables to be read in from data folder
+#----------------------------
+data_tables:
+ - name: control_target_lookup
+   file: control_target_lookup.csv
+
+targets_tables:
+ - name: king_targets
+   file: King Growth Targets 2021.csv
+   unit_chg_col: 2019-2044 Housing Target
+   emp_chg_col: 2019-2044 Job Target
+   unit_chg_start: 2019
+   unit_chg_horizon: 2044
+   emp_chg_start: 2019
+   emp_chg_horizon: 2044
+
+ - name: kitsap_targets
+   file: Kitsap Growth Targets 2021.csv
+   pop_chg_col: 2020-2044 Population Growth
+   emp_chg_col: 2020-2044 Employment Growth
+   pop_chg_start: 2020
+   pop_chg_horizon: 2044
+   emp_chg_start: 2020
+   emp_chg_horizon: 2044
+
+ - name: pierce_targets
+   file: Pierce Growth Targets 2021.csv
+   pop_chg_col: 2020-2044 Population Growth
+   emp_chg_col: 2020-2044 Employment Growth
+   pop_chg_start: 2020
+   pop_chg_horizon: 2044
+   emp_chg_start: 2020
+   emp_chg_horizon: 2044
+
+ - name: snohomish_targets
+   file: Snohomish Growth Targets 2021.csv
+   pop_chg_col: Population Chg 2020-44
+   emp_chg_col: Employment Chg 2019-44
+   pop_chg_start: 2020
+   pop_chg_horizon: 2044
+   emp_chg_start: 2019
+   emp_chg_horizon: 2044
 
 #----------------------------
 # Pypyr steps
 #----------------------------
 steps:
- - steps.get_elmer_data # this step can be turned off after initial data pull to save time
- - steps.get_census_data # this step can be turned off after initial data pull to save time
+#  - steps.get_elmer_data # this step can be turned off after initial data pull to save time
+#  - steps.get_census_data # this step can be turned off after initial data pull to save time
+ - steps.load_data
