@@ -69,6 +69,12 @@ class Pipeline:
         if 'nan_fill' in self.settings:
             df = df.fillna(self.settings['nan_fill'])
         return df
+    
+    def get_id_col(self, table_name):
+        for table in self.get_elmer_geo_list() + self.get_elmer_list():
+            if table['name'] == table_name and 'id_col' in table:
+                return table['id_col']
+        return None
 
 
 def create_directory(path_parts: list=None, path: str=None) -> Path:

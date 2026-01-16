@@ -36,19 +36,23 @@ ElmerGeo: # database
     - control_id
     - control_na
     - county_id
+   id_col: control_id
 
  - name: blocks
    sql_table: BLOCK2020
    columns:
       - geoid20
+   id_col: geoid20
 
 # pull all columns for Elmer instead of specifying columns
 Elmer: # database
  - name: ofm_estimates_2020 # name the table will be saved as in h5
    sql_table: ofm.v_estimates_2020 # table in elmer
+   id_col: block_geoid
 
  - name: ofm_estimates_2019
    sql_table: ofm.v_estimates_2019
+   id_col: block_geoid
 
 #----------------------------
 # tables to be read in from data folder
