@@ -15,13 +15,13 @@ county_ids: [53033,53035,53053,53061]
 state_id: 53
 
 census_variables:
-  total_population: # name variable will be changed to
+  dec_total_pop: # name variable will be changed to
     - P1_001N # variable code from census api
-  housing_units:
+  dec_units:
     - H1_001N
-  households:
+  dec_hh:
     - H1_002N
-  group_quarters:
+  dec_gq:
     - P5_001N
 
 
@@ -105,6 +105,6 @@ targets_tables:
 steps:
 #  - steps.get_elmer_data # pulls data from elmer database and saves to hdf5
 #  - steps.get_census_data # pulls decennial census data from api and saves to hdf5
-#  - steps.load_data # loads data from csv files into hdf5
+ - steps.load_data # loads data from csv files into hdf5
 #  - steps.block_control_xwalk # creates block to control area crosswalk
- - steps.prepare_block_data # aggregates block data (ofm and decennial) to control area level
+#  - steps.prepare_block_data # aggregates block data (ofm and decennial) to control area level

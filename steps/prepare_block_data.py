@@ -22,6 +22,11 @@ def sum_decennial_by_control_area(pipeline):
         .reset_index()
     )
 
+    # calculate hhpop
+    dec_by_control['dec_hhpop'] = (
+        dec_by_control['dec_total_pop'] - dec_by_control['dec_gq']
+    )
+
     # save to HDF5
     p.save_table('decennial_by_control_area', dec_by_control)
 
@@ -42,6 +47,20 @@ def sum_ofm_by_control_area(pipeline):
             .sum()[['housing_units', 'occupied_housing_units', 
                     'group_quarters_population', 'household_population']]
             .reset_index()
+        )
+
+        # rename columns
+        ofm_col_map = {
+            'housing_units': 'ofm_units',
+            'occupied_housing_units': 'ofm_hh',
+            'group_quarters_population': 'ofm_gq',
+            'household_population': 'ofm_hhpop'
+        }
+        ofm_by_control = ofm_by_control.rename(columns=ofm_col_map)
+
+        # calculate total population
+        ofm_by_control['ofm_total_pop'] = (
+            ofm_by_control['ofm_hhpop'] + ofm_by_control['ofm_gq']
         )
 
         # save to HDF5
