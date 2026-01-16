@@ -75,6 +75,12 @@ class Pipeline:
             if table['name'] == table_name and 'id_col' in table:
                 return table['id_col']
         return None
+    
+    def convert_id_to_int64(self, table, df):
+        if 'id_col' in table:
+            id_col = table['id_col']
+            df[id_col] = df[id_col].astype('int64')
+            return df
 
 
 def create_directory(path_parts: list=None, path: str=None) -> Path:

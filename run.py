@@ -15,7 +15,7 @@ def add_run_args(parser):
 
 def run(args):
     configs_dir = args.configs_dir
-    print(f"Running census_getter pipeline with configs in: {configs_dir}")
+    print(f"Running control-totals pipeline with configs in: {configs_dir}")
     pipelinerunner.run(f'{configs_dir}/settings', dict_in={'configs_dir': configs_dir})
 
 if __name__ == '__main__':

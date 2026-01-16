@@ -34,9 +34,10 @@ def read_from_elmer_geo(feature_class_name, cols, crs='epsg:2285'):
         return gdf[cols]
 
 def read_from_elmer(table_name, columns):
-    conn_string = "DRIVER={ODBC Driver 17 for SQL Server}; SERVER=SQLserver; DATABASE=Elmer; trusted_connection=yes"
-    sql_conn = pyodbc.connect(conn_string)
-    cols_str = ', '.join(columns)
-    sql_query = f'select {cols_str} from {table_name}'
-    df = pd.read_sql(sql=sql_query, con=sql_conn)
-    return df
+        conn_str = 'mssql+pyodbc://SQLserver/Elmer?driver=ODBC+Driver+17+for+SQL+Server'
+        engine = sqlalchemy.create_engine(conn_str)
+        with engine.connect() as con:
+                cols_str = ', '.join(columns)
+                sql_query = f'select {cols_str} from {table_name}'
+                df = pd.read_sql(sql=sql_query, con=con)
+        return df
