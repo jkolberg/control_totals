@@ -11,8 +11,16 @@ def load_data_tables_to_hdf5(pipeline):
         print(f"Loading {file_path} into HDF5 as {table_name}...")
         df = pd.read_csv(file_path)
         
+        # check that the correct columns are present
+        data_check_tables(df, table_name)
+
         # save to HDF5
         p.save_table(table_name, df)
+
+def data_check_tables(df, table_name):
+    if table_name == 'control_areas':
+        if 'control_id' not in df.columns:
+            raise ValueError("control_areas table must have control_id column.")
 
 
 def load_targets_to_hdf5(pipeline):

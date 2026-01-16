@@ -102,6 +102,7 @@ targets_tables:
 # Pypyr steps
 #----------------------------
 steps:
-#  - steps.get_elmer_data # this step can be turned off after initial data pull to save time
-#  - steps.get_census_data # this step can be turned off after initial data pull to save time
- - steps.load_data
+#  - steps.get_elmer_data # pulls data from elmer database and saves to hdf5
+#  - steps.get_census_data # pulls decennial census data from api and saves to hdf5
+#  - steps.load_data # loads data from csv files into hdf5
+#  - steps.block_control_xwalk # creates block to control area crosswalk
