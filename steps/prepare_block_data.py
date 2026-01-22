@@ -30,11 +30,22 @@ def sum_decennial_by_control_area(pipeline):
     # save to HDF5
     p.save_table('decennial_by_control_area', dec_by_control)
 
+def get_ofm_years(pipeline):
+    p = pipeline
+    years = []
+    for table in p.settings['Elmer']:
+        if 'ofm_estimates' in table['name']:
+            # get year from end of table name
+            year = table['name'].split('_')[-1]
+            years.append(year)
+    return years
+
 def sum_ofm_by_control_area(pipeline):
     p = pipeline
-    for ofm_table in ['ofm_estimates_prev_year', 'ofm_estimates_census_year']:
-        ofm = p.get_table(ofm_table)
-        ofm_block_id = p.get_id_col(ofm_table)
+    years = get_ofm_years(p)
+    for year in years:
+        ofm = p.get_table(f'ofm_estimates_{year}')
+        ofm_block_id = p.get_id_col(f'ofm_estimates_{year}')
         blk = p.get_table('block_control_xwalk')
         block_id = p.get_id_col('blocks')
 
@@ -64,7 +75,7 @@ def sum_ofm_by_control_area(pipeline):
         )
 
         # save to HDF5
-        p.save_table(f'{ofm_table}_by_control_area', ofm_by_control)
+        p.save_table(f'ofm_estimates_{year}_by_control_area', ofm_by_control)
 
 def run_step(context):
     # pypyr step

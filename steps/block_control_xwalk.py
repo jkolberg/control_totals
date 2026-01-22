@@ -19,7 +19,7 @@ def create_block_control_xwalk(pipeline):
 
     # spatial join block centroids to get control_id for each block
     # uses sjoin_nearest to handle edge cases where centroids fall just outside control areas
-    # this shouldn't be a big issue since they all looked to fall on waterways anyways
+    # this shouldn't be a big issue since the edge cases mostly fell on waterways
     blk_pts = blk_pts.sjoin_nearest(control_areas, how = 'left').drop(columns=['index_right'])
 
     # save block to control area crosswalk
