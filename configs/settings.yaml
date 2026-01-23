@@ -154,3 +154,4 @@ steps:
 #  - steps.prepare_block_data # aggregates block data (ofm and decennial) to control area level
  - steps.adjust_targets_to_base_year # adjusts targets to base year using ofm data
  - steps.units_chg_targets # calculates controls for targets that use housing unit change (only king county for now)
+ - steps.total_pop_chg_targets # calculates controls for targets that use total population change
