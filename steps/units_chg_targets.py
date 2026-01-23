@@ -29,8 +29,7 @@ def load_input_tables(pipeline):
     # calculate decennial hhsz
     df['dec_hhsz'] = df['dec_hhpop'] / df['dec_hh']
 
-    return df
-
+    return df, dec
 
 def load_hhsz_vacancy_rates(pipeline):
     p = pipeline
@@ -39,14 +38,37 @@ def load_hhsz_vacancy_rates(pipeline):
     king_vac_rates = p.settings['king_vac']
     return king_hhsz, king_vac_rates
 
-def create_horizon_year_column_names(pipeline):
+def get_units_horizon_col(pipeline):
     p = pipeline
     target_horizon_year = p.settings['target_horizon_year']
-    units_horizon_col = f'units_{target_horizon_year}'
-    households_horizon_col = f'hh_{target_horizon_year}'
-    hhpop_init_horizon_col = f'hhpop_initial_{target_horizon_year}'
-    hhpop_factored_horizon_col = f'hhpop_factored_{target_horizon_year}'
-    return units_horizon_col, households_horizon_col, hhpop_init_horizon_col, hhpop_factored_horizon_col
+    return f'units_{target_horizon_year}'
+
+def get_households_horizon_col(pipeline):
+    p = pipeline
+    target_horizon_year = p.settings['target_horizon_year']
+    return f'hh_{target_horizon_year}'
+
+def get_hhpop_init_horizon_col(pipeline):
+    p = pipeline
+    target_horizon_year = p.settings['target_horizon_year']
+    return f'hhpop_initial_{target_horizon_year}'
+
+def get_hhpop_factored_horizon_col(pipeline):
+    p = pipeline
+    target_horizon_year = p.settings['target_horizon_year']
+    return f'hhpop_factored_{target_horizon_year}'
+
+def get_total_pop_horizon_col(pipeline):
+    p = pipeline
+    target_horizon_year = p.settings['target_horizon_year']
+    total_pop_horizon_col = f'totalpop_{target_horizon_year}'
+    return total_pop_horizon_col
+
+def get_gq_horizon_col(pipeline):
+    p = pipeline
+    target_horizon_year = p.settings['target_horizon_year']
+    gq_horizon_col = f'gq_{target_horizon_year}'
+    return gq_horizon_col
 
 def calc_by_rgid(pipeline, targets_df):
     p = pipeline
@@ -63,8 +85,10 @@ def calc_by_rgid(pipeline, targets_df):
     df['vacancy_rate'] = df['RGID'].map(king_vac_rates)
 
     # load target horizon year and set column names for target horizon year
-    units_horizon_col, households_horizon_col, hhpop_init_horizon_col, hhpop_factored_horizon_col = \
-    create_horizon_year_column_names(p)
+    units_horizon_col = get_units_horizon_col(p)
+    households_horizon_col = get_households_horizon_col(p)
+    hhpop_init_horizon_col = get_hhpop_init_horizon_col(p)
+    hhpop_factored_horizon_col = get_hhpop_factored_horizon_col(p)
 
     # calcuate horizon year units
     df[units_horizon_col] = df['dec_units'] + df['units_chg_adj']
@@ -105,8 +129,10 @@ def calc_by_target_area(pipeline, df, targets_rgid):
 
     # load target horizon year and set column names for target horizon year
     target_horizon_year = p.settings['target_horizon_year']
-    units_horizon_col, households_horizon_col, hhpop_init_horizon_col, hhpop_factored_horizon_col = \
-    create_horizon_year_column_names(p)
+    units_horizon_col = get_units_horizon_col(p)
+    households_horizon_col = get_households_horizon_col(p)
+    hhpop_init_horizon_col = get_hhpop_init_horizon_col(p)
+    hhpop_factored_horizon_col = get_hhpop_factored_horizon_col(p)
 
     # calculate units for target horizon year
     df[units_horizon_col] = df['units_chg_adj'] + df['dec_units']
@@ -140,14 +166,41 @@ def calc_by_target_area(pipeline, df, targets_rgid):
     df[hhpop_factored_horizon_col] = (df[hhpop_init_horizon_col] * df['hhpop_factor']).round(0).astype(int)
     return df
 
+def calc_gq_tot_pop(pipeline, df, dec):
+    p = pipeline
+    # load target horizon year and set column names for target horizon year
+    target_horizon_year = p.settings['target_horizon_year']
+    units_horizon_col = get_units_horizon_col(p)
+    households_horizon_col = get_households_horizon_col(p)
+    hhpop_init_horizon_col = get_hhpop_init_horizon_col(p)
+    hhpop_factored_horizon_col = get_hhpop_factored_horizon_col(p)
+    
+    # load the Regional Economic Forecast table to get total GQ for the region in the horizon year
+    ref = p.get_table('ref_projection')
+    reg_gq_horizon = ref.loc[ref.variable == 'GQ Pop', str(target_horizon_year)].item()
+
+    # calculate GQ percentage of the region based on decennial data
+    reg_dec_gq_sum = dec['dec_gq'].sum()
+    df['dec_gq_pct'] = df['dec_gq'] / reg_dec_gq_sum
+
+    # calculate target area GQ for horizon year as a percentage of the regional GQ from REF
+    gq_horizon_col = get_gq_horizon_col(p)
+    df[gq_horizon_col] = (df['dec_gq_pct'] * reg_gq_horizon).round(0).astype(int)
+
+    # add GQ to household population to get total population for horizon year
+    total_pop_horizon_col = get_total_pop_horizon_col(p)
+    df[total_pop_horizon_col] = df[hhpop_factored_horizon_col] + df[gq_horizon_col]
+    return df
+
 
 def calculate_targets(pipeline):
     p = pipeline
-    df = load_input_tables(p)
+    df, dec = load_input_tables(p)
     targets_rgid = calc_by_rgid(p, df)
     df = calc_by_target_area(p, df, targets_rgid)
+    df = calc_gq_tot_pop(p, df, dec)
     # save table
-    p.save_table('units_change_targets',df)
+    p.save_table('adjusted_units_change_targets',df)
 
 def run_step(context):
     # pypyr step
