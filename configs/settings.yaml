@@ -4,7 +4,9 @@
 data_dir: data
 output_dir: output
 
-base_year : 2020
+base_year: 2020 
+horizon_year: 2050
+target_horizon_year: 2044
 
 rgids:
   1: Metro
@@ -20,7 +22,7 @@ rgids:
 # Hard coded King County gq, hhsz and vacancy rates by rgid
 # need to add these as calculations in the future once I find the source
 #----------------------------
-king_gq: # first column is rgid
+king_gq: # first column is rgid, second is gq percentage
   1: 3.4
   2: 1.2
   3: 1.6
@@ -28,7 +30,7 @@ king_gq: # first column is rgid
   5: .3
   6: .4
 
-king_hhsz:
+king_hhsz: # first column is rgid, second is average household size
   1: 2.12
   2: 2.52
   3: 2.51
@@ -36,7 +38,10 @@ king_hhsz:
   5: 2.65
   6: 2.62
 
-king_vac:
+king_metro_adj_hhsz: 2.00 # adjusted hhsz used for king county metro rgid areas when calclulating hhpop
+                          # for the targets, the rgid totals still use the king_hhsz value above
+
+king_vac: # first column is rgid, second is vacancy rate percentage
   1: 4.7
   2: 4.4
   3: 3.6
@@ -44,6 +49,9 @@ king_vac:
   5: 3.0
   6: 5.0
 
+king_hhpop_2044: 2828620 # target household population for king county in 2044
+                         # not sure where this number comes from, will need to
+                         # replace with calculated value in the future
 
 #----------------------------
 # Census settings
@@ -102,42 +110,38 @@ data_tables:
  - name: control_target_lookup
    file: control_target_lookup.csv
 
+ - name: ref_projection
+   file: REF_projection.csv
+
+
 targets_tables:
  - name: king_targets
    file: King Growth Targets 2021.csv
    units_chg_col: 2019-2044 Housing Target
    emp_chg_col: 2019-2044 Job Target
    units_chg_start: 2019
-   units_chg_horizon: 2044
    emp_chg_start: 2019
-   emp_chg_horizon: 2044
 
  - name: kitsap_targets
    file: Kitsap Growth Targets 2021.csv
    total_pop_chg_col: 2020-2044 Population Growth
    emp_chg_col: 2020-2044 Employment Growth
    total_pop_chg_start: 2020
-   total_pop_chg_horizon: 2044
    emp_chg_start: 2020
-   emp_chg_horizon: 2044
 
  - name: pierce_targets
    file: Pierce Growth Targets 2021.csv
    total_pop_chg_col: 2020-2044 Population Growth
    emp_chg_col: 2020-2044 Employment Growth
    total_pop_chg_start: 2020
-   total_pop_chg_horizon: 2044
    emp_chg_start: 2020
-   emp_chg_horizon: 2044
 
  - name: snohomish_targets
    file: Snohomish Growth Targets 2021.csv
    total_pop_chg_col: Population Chg 2020-44
    emp_chg_col: Employment Chg 2019-44
    total_pop_chg_start: 2020
-   total_pop_chg_horizon: 2044
    emp_chg_start: 2019
-   emp_chg_horizon: 2044
 
 #----------------------------
 # Pypyr steps

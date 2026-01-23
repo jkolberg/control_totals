@@ -8,13 +8,12 @@ def combine_targets(pipeline, target_type):
         if f'{target_type}_chg_col' in table:
             df_table = pipeline.get_table(table['name'])
 
-            # add start and horizon year columns
+            # add start year column
             df_table['start'] = table[f'{target_type}_chg_start']
-            df_table['horizon'] = table[f'{target_type}_chg_horizon']
 
             df = pd.concat([df, df_table], ignore_index=True)
     
-    return df[['target_id', f'{target_type}_chg', 'start', 'horizon']]
+    return df[['target_id', f'{target_type}_chg', 'start']]
 
 
 def sum_ofm_to_target_area(pipeline, year, target_type):
@@ -72,7 +71,6 @@ def adjust_targets(pipeline, target_type):
     # get ofm for all start years and base year amd merge to targets
     ofm_all_years = get_ofm_all_years(p, start_years, target_type)
     df = df.merge(ofm_all_years, on='target_id', how='left')
-    df.to_csv('data/test.csv')
 
     # loop through each row to calculate ofm change from target start year to base year
     for index, row in df.iterrows():
@@ -92,8 +90,8 @@ def adjust_targets(pipeline, target_type):
 
     # save adjusted targets table
     table_name = f'adjusted_{target_type}_change_targets'
-    out_df = df[['target_id','start','horizon',chg_col,chg_adj_col]]
-    p.save_table(table_name,df)
+    out_df = df[['target_id','start',chg_col,chg_adj_col]]
+    p.save_table(table_name,out_df)
 
 
 
