@@ -1,5 +1,5 @@
 import pandas as pd
-from util import Pipeline, load_input_tables, calc_gq, TargetHorizonColumnNames
+from util import Pipeline, load_input_tables, calc_gq
 
 
 def load_hhsz_vacancy_rates(pipeline):
@@ -15,12 +15,12 @@ def calc_by_rgid(pipeline, targets_df):
     p = pipeline
     
     # load target horizon year and set column names for target horizon year
-    horizon_cols = TargetHorizonColumnNames(p)
-    units_horizon_col = horizon_cols.units()
-    households_horizon_col = horizon_cols.households()
-    hhpop_init_horizon_col = horizon_cols.hhpop_initial()
-    hhpop_factored_horizon_col = horizon_cols.hhpop_factored()
-    hhsz_horizon_col = horizon_cols.hhsz()
+    targets_end_year = p.settings['targets_end_year']
+    units_horizon_col = f'units_{targets_end_year}'
+    hh_horizon_col = f'hh_{targets_end_year}'
+    hhpop_init_horizon_col = f'hhpop_initial_{targets_end_year}'
+    hhpop_factored_horizon_col = f'hhpop_factored_{targets_end_year}'
+    hhsz_horizon_col = f'hhsz_{targets_end_year}'
     
     #group by rgid to get totals for each rgid
     df = targets_df.drop(columns=['target_id','start','county_id']).groupby('RGID').sum().reset_index()
@@ -37,10 +37,10 @@ def calc_by_rgid(pipeline, targets_df):
     df[units_horizon_col] = df['dec_units'] + df['units_chg_adj']
 
     # calculate horizon year households
-    df[households_horizon_col] = (df[units_horizon_col] * (1 - df['vacancy_rate']/100)).round(0).astype(int)
+    df[hh_horizon_col] = (df[units_horizon_col] * (1 - df['vacancy_rate']/100)).round(0).astype(int)
 
     # calculate horizon year initial household population (unfactored)
-    df[hhpop_init_horizon_col] = (df[households_horizon_col] * df[hhsz_horizon_col]).round(0).astype(int)
+    df[hhpop_init_horizon_col] = (df[hh_horizon_col] * df[hhsz_horizon_col]).round(0).astype(int)
 
     # load total household population target for horizon year
     hhpop_horizon_forced_total = p.settings['king_hhpop_2044']
@@ -71,19 +71,18 @@ def calc_by_target_area(pipeline, df, targets_rgid):
     df['vacancy_rate'] = df['RGID'].map(king_vac_rates)
 
     # load target horizon year and set column names for target horizon year
-    target_horizon_year = p.settings['target_horizon_year']
-    horizon_cols = TargetHorizonColumnNames(p)
-    units_horizon_col = horizon_cols.units()
-    households_horizon_col = horizon_cols.households()
-    hhpop_init_horizon_col = horizon_cols.hhpop_initial()
-    hhpop_factored_horizon_col = horizon_cols.hhpop_factored()
-    hhsz_horizon_col = horizon_cols.hhsz()
+    targets_end_year = p.settings['targets_end_year']
+    units_horizon_col = f'units_{targets_end_year}'
+    hh_horizon_col = f'hh_{targets_end_year}'
+    hhpop_init_horizon_col = f'hhpop_initial_{targets_end_year}'
+    hhpop_factored_horizon_col = f'hhpop_factored_{targets_end_year}'
+    hhsz_horizon_col = f'hhsz_{targets_end_year}'
     
     #  calculate units for target horizon year
     df[units_horizon_col] = df['units_chg_adj'] + df['dec_units']
 
     # calculate households for target horizon year
-    df[households_horizon_col] = (df[units_horizon_col] * (1 - df['vacancy_rate']/100)).round(0).astype(int)
+    df[hh_horizon_col] = (df[units_horizon_col] * (1 - df['vacancy_rate']/100)).round(0).astype(int)
 
     # calculate adjusted hhsz
     df[hhsz_horizon_col] = df['king_hhsz'] / df['dec_hhsz_by_rgid'] * df['dec_hhsz']
@@ -92,22 +91,22 @@ def calc_by_target_area(pipeline, df, targets_rgid):
     df.loc[df[hhsz_horizon_col]>5, hhsz_horizon_col] = df.loc[df[hhsz_horizon_col]>5, 'king_hhsz']
 
     # calculate initial hhpop for target horizon year
-    df[hhpop_init_horizon_col] = (df[households_horizon_col] * df[hhsz_horizon_col]).round(0).astype(int)
+    df[hhpop_init_horizon_col] = (df[hh_horizon_col] * df[hhsz_horizon_col]).round(0).astype(int)
 
     # sum initial hhpop by rgid and add as a column
-    hhpop_horizon_sum_by_rgid_col = f'initial_hhpop_{target_horizon_year}_sum_by_rgid'
+    hhpop_horizon_sum_by_rgid_col = f'initial_hhpop_{targets_end_year}_sum_by_rgid'
     df[hhpop_horizon_sum_by_rgid_col] = df.groupby('RGID')[hhpop_init_horizon_col].transform('sum')
 
     # merge factored hhpop by rgid to df
     df = (
         df.merge(targets_rgid[['RGID', hhpop_factored_horizon_col]]
                 .rename(columns={
-                    hhpop_factored_horizon_col: f'hhpop_rgid_factored_{target_horizon_year}'
+                    hhpop_factored_horizon_col: f'hhpop_rgid_factored_{targets_end_year}'
                     }), on='RGID', how='left')
     )
 
     # calculate factored hhpop for target horizon year
-    df['hhpop_factor'] = df[f'hhpop_rgid_factored_{target_horizon_year}'] / df[hhpop_horizon_sum_by_rgid_col]
+    df['hhpop_factor'] = df[f'hhpop_rgid_factored_{targets_end_year}'] / df[hhpop_horizon_sum_by_rgid_col]
     df[hhpop_factored_horizon_col] = (df[hhpop_init_horizon_col] * df['hhpop_factor']).round(0).astype(int)
     return df
 
@@ -116,23 +115,26 @@ def calc_by_target_area(pipeline, df, targets_rgid):
 def calc_gq_tot_pop(pipeline, df, dec):
     p = pipeline
     # load target horizon year and set column names for target horizon year
-    target_horizon_year = p.settings['target_horizon_year']
-    horizon_cols = TargetHorizonColumnNames(p)
-    hhpop_factored_horizon_col = horizon_cols.hhpop_factored()
+    targets_end_year = p.settings['targets_end_year']
+    hhpop_factored_horizon_col = f'hhpop_factored_{targets_end_year}'
 
     # calculate GQ for target areas
-    df = calc_gq(p, df, dec)
+    df = calc_gq(p, df, dec, targets_end_year)
 
     # add GQ to household population to get total population for horizon year
-    total_pop_horizon_col = horizon_cols.total_pop()
-    gq_horizon_col = horizon_cols.gq()
+    total_pop_horizon_col = f'total_pop_{targets_end_year}'
+    gq_horizon_col = f'gq_{targets_end_year}'
     df[total_pop_horizon_col] = df[hhpop_factored_horizon_col] + df[gq_horizon_col]
     return df
 
 
 def calculate_targets(pipeline):
     p = pipeline
+    # load target horizon year
+    targets_end_year = p.settings['targets_end_year']
+    # load input tables
     df, dec = load_input_tables(p, 'units')
+    # perform calculations
     targets_rgid = calc_by_rgid(p, df)
     df = calc_by_target_area(p, df, targets_rgid)
     df = calc_gq_tot_pop(p, df, dec)

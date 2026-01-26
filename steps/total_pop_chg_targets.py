@@ -1,5 +1,5 @@
 import pandas as pd
-from util import Pipeline, load_input_tables, calc_gq, TargetHorizonColumnNames
+from util import Pipeline, load_input_tables, calc_gq
 
 
 def calc_dec_hhsz(dec):
@@ -7,7 +7,7 @@ def calc_dec_hhsz(dec):
 
 def calc_ref_horizon_hhsz(pipeline):
     p = pipeline
-    horizon_year = p.settings['target_horizon_year']
+    horizon_year = p.settings['targets_end_year']
     ref = p.get_table('ref_projection')
     hhpop = ref.loc[ref.variable == 'HH Pop', str(horizon_year)].item()
     hh = ref.loc[ref.variable == 'HH', str(horizon_year)].item()
@@ -23,21 +23,20 @@ def calc_horizon_hhsz(df, dec_hhsz, ref_hhsz, hhsz_horizon_col):
 def calculate_targets(pipeline):
     p = pipeline
     # Get target column names
-    horizon_cols = TargetHorizonColumnNames(p)
-    hhpop_horizon_col = horizon_cols.hhpop()
-    gq_horizon_col = horizon_cols.gq()
-    hhsz_horizon_col = horizon_cols.hhsz()
-    hh_horizon_col = horizon_cols.households()
-
+    targets_end_year = p.settings["targets_end_year"]
+    hhpop_horizon_col = f'hhpop_{targets_end_year}'
+    gq_horizon_col = f'gq_{targets_end_year}'
+    hhsz_horizon_col = f'hhsz_{targets_end_year}'
+    hh_horizon_col = f'hh_{targets_end_year}'
     # Load input tables
     df, dec = load_input_tables(p, 'total_pop')
 
     # Calculate total population for horizon year
-    total_pop_horizon_col = horizon_cols.total_pop()
+    total_pop_horizon_col = f'total_pop_{targets_end_year}'
     df[total_pop_horizon_col] = df['dec_total_pop'] + df['total_pop_chg_adj']
 
     # Calculate GQ and household population for horizon year
-    df = calc_gq(p, df, dec)
+    df = calc_gq(p, df, dec, targets_end_year)
     df[hhpop_horizon_col] = df[total_pop_horizon_col] - df[gq_horizon_col]
     
     # Calculate household size: pct change from decennial to REF applied to decennial hhsz

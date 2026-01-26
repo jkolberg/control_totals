@@ -5,8 +5,9 @@ data_dir: data
 output_dir: output
 
 base_year: 2020 
-horizon_year: 2050
-target_horizon_year: 2044
+end_year: 2050 # final year for control totals output
+
+targets_end_year: 2044 # year for which growth targets are set
 
 rgids:
   1: Metro
@@ -147,11 +148,12 @@ targets_tables:
 # Pypyr steps
 #----------------------------
 steps:
-#  - steps.get_elmer_data # pulls data from elmer database and saves to hdf5
-#  - steps.get_census_data # pulls decennial census data from api and saves to hdf5
+ - steps.get_elmer_data # pulls data from elmer database and saves to hdf5
+ - steps.get_census_data # pulls decennial census data from api and saves to hdf5
  - steps.load_data # loads data from csv files into hdf5
-#  - steps.block_control_xwalk # creates block to control area crosswalk
-#  - steps.prepare_block_data # aggregates block data (ofm and decennial) to control area level
+ - steps.block_control_xwalk # creates block to control area crosswalk
+ - steps.prepare_block_data # aggregates block data (ofm and decennial) to control area level
  - steps.adjust_targets_to_base_year # adjusts targets to base year using ofm data
  - steps.units_chg_targets # calculates controls for targets that use housing unit change (only king county for now)
  - steps.total_pop_chg_targets # calculates controls for targets that use total population change
+ - steps.extrapolate_to_controls_year # extrapolates out to the control totals end year from the targets end year

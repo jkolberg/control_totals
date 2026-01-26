@@ -32,49 +32,18 @@ def load_input_tables(pipeline,targets_type):
     return df, dec
 
 
-def calc_gq(pipeline, df, dec):
+def calc_gq(pipeline, df, dec, horizon_year):
     p = pipeline
-    target_horizon_year = p.settings['target_horizon_year']
-    horizon_cols = TargetHorizonColumnNames(p)
 
     # load the Regional Economic Forecast table to get total GQ for the region in the horizon year
     ref = p.get_table('ref_projection')
-    reg_gq_horizon = ref.loc[ref.variable == 'GQ Pop', str(target_horizon_year)].item()
+    reg_gq_horizon = ref.loc[ref.variable == 'GQ Pop', str(horizon_year)].item()
 
     # calculate GQ percentage of the region based on decennial data
     reg_dec_gq_sum = dec['dec_gq'].sum()
     df['dec_gq_pct'] = df['dec_gq'] / reg_dec_gq_sum
 
     # calculate target area GQ for horizon year as a percentage of the regional GQ from REF
-    gq_horizon_col = horizon_cols.gq()
+    gq_horizon_col = f'gq_{horizon_year}'
     df[gq_horizon_col] = (df['dec_gq_pct'] * reg_gq_horizon).round(0).astype(int)
     return df
-
-
-class TargetHorizonColumnNames:
-    def __init__(self, pipeline):
-        self.target_horizon_year = pipeline.settings['target_horizon_year']
-
-    def units(self):
-        return f'units_{self.target_horizon_year}'
-
-    def households(self):
-        return f'hh_{self.target_horizon_year}'
-    
-    def hhsz(self):
-        return f'hhsz_{self.target_horizon_year}'
-    
-    def hhpop(self):
-        return f'hhpop_{self.target_horizon_year}'
-
-    def hhpop_initial(self):
-        return f'hhpop_initial_{self.target_horizon_year}'
-
-    def hhpop_factored(self):
-        return f'hhpop_factored_{self.target_horizon_year}'
-
-    def total_pop(self):
-        return f'total_pop_{self.target_horizon_year}'
-
-    def gq(self):
-        return f'gq_{self.target_horizon_year}'
