@@ -45,6 +45,9 @@ def extrapolate_to_controls_year(pipeline):
     df = calc_gq(p,df,dec,controls_end_year)
     # calculate hhpop for controls horizon year
     df[f'hhpop_{controls_end_year}'] = df[f'hh_{controls_end_year}'] + df[f'total_pop_{controls_end_year}']
+    # calculate hhsz for controls horizon year
+    hhsz_control_col = f'hhsz_{controls_end_year}'
+    df[hhsz_control_col] = df[f'hhpop_{controls_end_year}'] / df[f'hh_{controls_end_year}']
     # save table
     p.save_table('extrapolated_targets', df)
 
